@@ -8,35 +8,58 @@ public class AccessWebcam : MonoBehaviour
 {
     public RawImage webcamRawImage;
     public TextMeshProUGUI Msgs;
+    public GameObject DebugTextPanel;
+    public TextMeshProUGUI DebugText;
 
+    private float webcamAspectRatio;
     private WebCamTexture webCamTexture;
     // Start is called before the first frame update
     void Start()
     {
-        Msgs.text = "Starting please wait...";
+        ShowText("Starting please wait...");
 
+        webcamAspectRatio = -1;
         WebCamDevice[] devices = WebCamTexture.devices;
         if (devices.Length == 0)
         {
-            Msgs.text = "No cameras found!";
+            ShowText("No cameras found!");            
             return;
         }
 
         webCamTexture = new WebCamTexture(devices[0].name);
         webcamRawImage.texture = webCamTexture;
         webCamTexture.Play();
+        ShowText("Started playing webcam texture now...");
 
-        var arf = webcamRawImage.gameObject.GetComponent<AspectRatioFitter>();
-        //arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        arf.aspectRatio = webCamTexture.width*1.0f / webCamTexture.height;
-        Debug.Log(string.Format("Webcam width={0}, height={1}, aspect ratio={2}", webCamTexture.width, webCamTexture.height, arf.aspectRatio));
-
-        Msgs.text = "Playing webcam texture now...";
+        CloseDebugText();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void ShowText(string s)
     {
-        
+        Msgs.text = s;
+        DebugText.text += "\n" + s;
     }
+
+    public void CloseDebugText()
+    {
+        DebugTextPanel.SetActive(false);
+    }
+    public void ShowDebugText()
+    {
+        DebugTextPanel.SetActive(true);
+    }
+
+    private void Update()
+    {
+        if(webcamAspectRatio < 0 && webCamTexture !=null && webCamTexture.didUpdateThisFrame)
+        {
+            var arf = webcamRawImage.gameObject.GetComponent<AspectRatioFitter>();
+            //arf.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            webcamAspectRatio = webCamTexture.width * 1.0f / webCamTexture.height;
+            arf.aspectRatio = webcamAspectRatio;
+            ShowText(string.Format("Webcam width={0}, height={1}, aspect ratio={2}", webCamTexture.width, webCamTexture.height, arf.aspectRatio));
+            ShowText("Playing webcam texture now...");
+        }
+    }
+
 }
